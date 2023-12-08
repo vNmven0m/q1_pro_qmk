@@ -21,8 +21,11 @@
 #    define ENCODER_DEFAULT_POS 0x3
 #endif
 
+#define DYNAMIC_KEYMAP_LAYER_COUNT 6
+
 #ifdef RGB_MATRIX_ENABLE
 /* RGB Matrix driver configuration */
+#    define RGB_MATRIX_CENTER { 106, 32 }
 #    define DRIVER_COUNT 2
 
 #    define DRIVER_ADDR_1 0b1110111
