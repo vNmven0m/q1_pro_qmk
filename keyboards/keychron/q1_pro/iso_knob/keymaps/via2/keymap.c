@@ -45,13 +45,13 @@ layer_state_t layer_state_set_user(layer_state_t state) {
         //Light up all the keys in purple
         break;
     case MAC_BASE:
-        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband);
+        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband_splash);
         break;
     case WIN_BASE:
-        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband);
+        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband_splash);
         break;
     case WIN_GAMING:
-        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband);
+        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband_splash);
         break;
     default: //  for any other layers, or the default layer
         break;
@@ -107,7 +107,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS,  RGB_RMOD, RGB_VAD,  RGB_HUD,  RGB_SAD,  RGB_SPD,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,            KC_TRNS,            KC_END,
         KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  BAT_LVL,  NK_TOGG,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,            KC_TRNS,  KC_TRNS,
         KC_TRNS,  KC_TRNS,  KC_TRNS,                                KC_TRNS,                                KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS,  KC_TRNS)
-        
+
 };
 
 #if defined(ENCODER_MAP_ENABLE)
