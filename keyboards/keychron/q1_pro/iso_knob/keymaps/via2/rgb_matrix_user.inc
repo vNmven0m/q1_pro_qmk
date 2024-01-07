@@ -23,8 +23,8 @@ void generate_sets(uint8_t counter, uint8_t x, uint8_t limit, uint8_t result_siz
     }
 }
 
-uint8_t map(uint8_t x, uint8_t in_min, uint8_t in_max, uint8_t out_min, uint8_t out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+float map(uint8_t x, uint8_t in_min, uint8_t in_max, uint8_t out_min, uint8_t out_max) {
+    return ((float)x - in_min) * ((float)out_max - out_min) / ((float)in_max - in_min) + out_min;
 }
 
 static bool diagonal_colorband_run(effect_params_t* params) {
@@ -96,10 +96,10 @@ static bool diagonal_colorband_run(effect_params_t* params) {
 static bool diagonal_colorband_splash_run(effect_params_t* params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
-    const uint8_t color_count = 2;
-    const uint8_t color_width = 7;
-    const uint8_t blend_leds  = 3;
-    float       interpolation = 0.5;
+    const uint8_t color_count   = 2;
+    const uint8_t color_width   = 3;
+    const uint8_t blend_leds    = 5;
+    float         interpolation = 0.5;
 
     HSV colors[2] = {
         {140, 255, 255},
@@ -107,7 +107,7 @@ static bool diagonal_colorband_splash_run(effect_params_t* params) {
     };
 
     uint8_t        shift             = 0;
-    uint8_t        h_speed_increment = 100 / (rgb_matrix_config.speed / 8);
+    uint8_t        h_speed_increment = 255 - rgb_matrix_config.speed;
     static uint8_t h_increment       = 0;
     uint8_t        effectSize        = color_width * color_count;
     uint8_t        result[effectSize];
@@ -122,7 +122,7 @@ static bool diagonal_colorband_splash_run(effect_params_t* params) {
             if (i != NO_LED) {
                 uint8_t color_index      = result[col % effectSize] - 1;
                 uint8_t next_color_index = result[(col + blend_leds) % effectSize] - 1;
-                HSV current_color = colors[color_index];
+                HSV     current_color    = colors[color_index];
 
                 if (color_index == next_color_index) {
                     RGB rgb = rgb_matrix_hsv_to_rgb(current_color);
@@ -132,11 +132,33 @@ static bool diagonal_colorband_splash_run(effect_params_t* params) {
 
                 HSV next_color    = colors[next_color_index];
                 HSV blended_color = {255, 255, 255};
+                /*
+                blended_color.h = (uint8_t)(current_color.h + (((float)next_color.h - current_color.h) * interpolation));
+                blended_color.s = (uint8_t)(current_color.s + (((float)next_color.s - current_color.s) * interpolation));
 
-                blended_color.h   = (uint8_t)(current_color.h + (((float)next_color.h - current_color.h) * interpolation));
-                blended_color.s   = (uint8_t)(current_color.s + (((float)next_color.s - current_color.s) * interpolation));
-                
                 RGB rgb = rgb_matrix_hsv_to_rgb(blended_color);
+                rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+
+                */
+                uint8_t distance = blend_leds;
+
+                if (blend_leds > 1) {
+                    for (uint8_t n = 1; n < blend_leds; n++) {
+                        if (color_index != (result[(col + n) % effectSize] - 1)) {
+                            distance = n;
+                            break;
+                        }
+                    }
+                    float baseInterpolation = (float)(distance - 1) / blend_leds;
+                    float intervalSize      = 1.0 / blend_leds;
+                    interpolation           = 1.0 - (baseInterpolation + intervalSize * (1.0 - h_increment / h_speed_increment));
+                    interpolation           = (interpolation < 0.0) ? 0.0 : interpolation;
+                } else {
+                    interpolation = 0.5;
+                }
+                blended_color.h = (uint8_t)(current_color.h + (((float)next_color.h - current_color.h) * interpolation));
+                blended_color.s = (uint8_t)(current_color.s + (((float)next_color.s - current_color.s) * interpolation));
+                RGB rgb         = rgb_matrix_hsv_to_rgb(blended_color);
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
             }
         }
