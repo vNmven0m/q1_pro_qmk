@@ -45,13 +45,13 @@ layer_state_t layer_state_set_user(layer_state_t state) {
         //Light up all the keys in purple
         break;
     case MAC_BASE:
-        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband_splash);
+        rgb_matrix_mode(RGB_MATRIX_CUSTOM_custom_gradientwave);
         break;
     case WIN_BASE:
-        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband_splash);
+        rgb_matrix_mode(RGB_MATRIX_CUSTOM_custom_gradientwave);
         break;
     case WIN_GAMING:
-        rgb_matrix_mode(RGB_MATRIX_CUSTOM_diagonal_colorband_splash);
+        rgb_matrix_mode(RGB_MATRIX_CUSTOM_custom_gradientwave);
         break;
     default: //  for any other layers, or the default layer
         break;

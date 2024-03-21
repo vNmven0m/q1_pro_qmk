@@ -2,7 +2,7 @@
 // Declare custom effects using the RGB_MATRIX_EFFECT macro
 // (note the lack of semicolon after the macro!)
 RGB_MATRIX_EFFECT(diagonal_colorband)
-RGB_MATRIX_EFFECT(diagonal_colorband_splash)
+RGB_MATRIX_EFFECT(custom_gradientwave)
 
 // Step 2.
 // Define effects inside the `RGB_MATRIX_CUSTOM_EFFECT_IMPLS` ifdef block
@@ -23,8 +23,12 @@ void generate_sets(uint8_t counter, uint8_t x, uint8_t limit, uint8_t result_siz
     }
 }
 
-float map(uint8_t x, uint8_t in_min, uint8_t in_max, uint8_t out_min, uint8_t out_max) {
-    return ((float)x - in_min) * ((float)out_max - out_min) / ((float)in_max - in_min) + out_min;
+RGB interpolate(RGB color1, RGB color2, float interpolation_factor){
+    RGB blended_color = {0, 0, 0};
+    blended_color.r   = (uint8_t)(color1.r + (((float)color2.r - color1.r) * interpolation_factor));
+    blended_color.g   = (uint8_t)(color1.g + (((float)color2.g - color1.g) * interpolation_factor));
+    blended_color.b   = (uint8_t)(color1.b + (((float)color2.b - color1.b) * interpolation_factor));
+    return blended_color;
 }
 
 static bool diagonal_colorband_run(effect_params_t* params) {
@@ -93,21 +97,37 @@ static bool diagonal_colorband_run(effect_params_t* params) {
     return rgb_matrix_check_finished_leds(led_max);
 }
 
-static bool diagonal_colorband_splash_run(effect_params_t* params) {
+static bool diagonal_colorband(effect_params_t* params) {
+    return diagonal_colorband_run(params);
+}
+
+static RGB previous[(MATRIX_COLS + 1)*(MATRIX_ROWS + 1)];
+
+static void custom_gradientwave_init(effect_params_t* params) {
+  for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+            for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                uint8_t i = g_led_config.matrix_co[row][col];
+                RGB base = {0, 0, 0};
+                previous[i] = base;
+
+        }
+    }
+}
+static bool custom_gradientwave_run(effect_params_t* params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
     const uint8_t color_count   = 2;
-    const uint8_t color_width   = 3;
+    const uint8_t color_width   = 9;
     const uint8_t blend_leds    = 5;
     float         interpolation = 0.5;
 
     HSV colors[2] = {
-        {140, 255, 255},
+        {150, 255, 255},
         {180, 255, 255},
     };
 
     uint8_t        shift             = 0;
-    uint8_t        h_speed_increment = 255 - rgb_matrix_config.speed;
+    uint8_t        h_speed_increment = 127 - (rgb_matrix_config.speed / 4);
     static uint8_t h_increment       = 0;
     uint8_t        effectSize        = color_width * color_count;
     uint8_t        result[effectSize];
@@ -125,8 +145,13 @@ static bool diagonal_colorband_splash_run(effect_params_t* params) {
                 HSV     current_color    = colors[color_index];
 
                 if (color_index == next_color_index) {
-                    RGB rgb = rgb_matrix_hsv_to_rgb(current_color);
+                    RGB current = rgb_matrix_hsv_to_rgb(current_color);
+
+                    RGB rgb = interpolate(current, previous[i] , 1.0 - ((float)h_increment / (h_speed_increment + 1)));
                     rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+                    if (h_increment > h_speed_increment) {
+                        previous[i] = current;
+                    }
                     continue;
                 }
 
@@ -149,17 +174,18 @@ static bool diagonal_colorband_splash_run(effect_params_t* params) {
                             break;
                         }
                     }
-                    float baseInterpolation = (float)(distance - 1) / blend_leds;
-                    float intervalSize      = 1.0 / blend_leds;
-                    interpolation           = 1.0 - (baseInterpolation + intervalSize * (1.0 - h_increment / h_speed_increment));
-                    interpolation           = (interpolation < 0.0) ? 0.0 : interpolation;
+                    interpolation = 1.0 -((float)(distance - 1) / blend_leds);
                 } else {
                     interpolation = 0.5;
                 }
                 blended_color.h = (uint8_t)(current_color.h + (((float)next_color.h - current_color.h) * interpolation));
                 blended_color.s = (uint8_t)(current_color.s + (((float)next_color.s - current_color.s) * interpolation));
-                RGB rgb         = rgb_matrix_hsv_to_rgb(blended_color);
+                RGB current         = rgb_matrix_hsv_to_rgb(blended_color);
+                RGB rgb = interpolate(current, previous[i], 1.0 - ((float)h_increment / (h_speed_increment + 1)));
                 rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+                if (h_increment > h_speed_increment) {
+                    previous[i] = current;
+                }
             }
         }
         // shift++;
@@ -174,12 +200,9 @@ static bool diagonal_colorband_splash_run(effect_params_t* params) {
     return rgb_matrix_check_finished_leds(led_max);
 }
 
-static bool diagonal_colorband(effect_params_t* params) {
-    return diagonal_colorband_run(params);
-}
-
-static bool diagonal_colorband_splash(effect_params_t* params) {
-    return diagonal_colorband_splash_run(params);
+static bool custom_gradientwave(effect_params_t* params) {
+    if (params->init) custom_gradientwave_init(params);
+    return custom_gradientwave_run(params);
 }
 
 #endif // RGB_MATRIX_CUSTOM_EFFECT_IMPLS
